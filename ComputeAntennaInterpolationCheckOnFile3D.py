@@ -21,11 +21,7 @@ import matplotlib.pyplot as plt
 from os.path import split, join, realpath
 from zhairesppath import GetZHSEffectiveactionIndex
 
-#root_dir = realpath(join(split(__file__)[0], ".."))
-#sys.path.append(join(root_dir))
-#ZHAIRESPYTHON=os.environ["ZHAIRESPYTHON"]
-#sys.path.append(ZHAIRESPYTHON)
-#import AiresInfoFunctions as AiresInfo
+
 import hdf5fileinout as hdf5io
 from StarshapeInterpolation3D import do_interpolation_hdf5
 from StarshapeInterpolation3D import ComputeAntennaAlpha
