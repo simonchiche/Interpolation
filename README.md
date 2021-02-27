@@ -1,2 +1,2 @@
 # Interpolation
-Interpolatin codes for the RadioMorphing
+Interpolation codes for the RadioMorphing
