@@ -7,40 +7,22 @@ run ant_trig_db [argv1]
 argv1: str
     path+name of shower database
 '''
-import sys
 import os
 import logging   #for...you guessed it...logging
-import sqlite3   #for the database
-import argparse  #for command line parsing
-import glob      #for listing files in directories
-import importlib #to be able to import modules dynamically (will need it to switch from cluster to local run configurations)
-import time      #for the sleep
-import datetime  #for the now()
 import numpy as np
 import matplotlib.pyplot as plt
-from os.path import split, join, realpath
 from zhairesppath import GetZHSEffectiveactionIndex
 
 
 import hdf5fileinout as hdf5io
 from StarshapeInterpolation3D import do_interpolation_hdf5
-from StarshapeInterpolation3D import ComputeAntennaAlpha
-from StarshapeInterpolation3D import ComputeAntennaPhi
 
 font = {'family' : 'normal',
         'weight' : 'normal',
         'size'   : 14}
 
 plt.rc('font', **font)
-#parser = argparse.ArgumentParser(description='A script to get the CPU time in a library of Simulations')
-#parser.add_argument('InputFile', #name of the parameter
-                    #metavar="filename", #name of the parameter value in the help
-                    #help='The HDF5 file') # help message for this parameter
-#results = parser.parse_args()
-#dbfile=results.InputFile
 
-#what to use in the interpolation (efield, voltage, filteredvoltage, all)
-# all, efield, voltage, filtered voltage
 usetrace='efield'
 DISPLAY=False
 
@@ -63,12 +45,7 @@ EfieldTraces = []
 
 
 try:
-  #InputFilename=dbfile
-  #InputFilename="/home/mjtueros/GRAND/GP300/ConicalSthpInterpolatorDocumentation/Examples/Stshp_Proton_3.98_63.0_0.0_6/Stshp_Proton_3.98_63.0_0.0_6.hdf5"
-  #InputFilename="/home/mjtueros/AiresRepository/DiscreteLibrary/TopoStshpOutbox/Stshp_Gamma_3.98_87.1_0.0_5/Stshp_Gamma_3.98_87.1_0.0_5.hdf5"
-  #InputFilename="/home/mjtueros/AiresRepository/DiscreteLibrary/TopoStshpOutbox/Stshp_Proton_3.98_87.1_90.0_2/Stshp_Proton_3.98_87.1_90.0_2.hdf5"
   InputFilename = "./Stshp_Proton_0.681_53.3_0.0_1" 
-  #InputFilename = "Stshp_Stshp_Proton_3.98_87.1_180.0_1_5000.0.hdf5"
   print("InputFileName:"+InputFilename)
   
   OutputFilename = InputFilename + '.Interpolated3D.'+str(usetrace)+'.hdf5'
@@ -122,12 +99,6 @@ try:
   plt.tight_layout()
   plt.savefig("spherical_time.pdf")
   plt.show()
-  
-  
-  
-  
-  
-  
   
   
   print(t0)
@@ -209,27 +180,13 @@ try:
   #print("#Azimuth --> ", Azimuth)
   Inclination = hdf5io.GetEventBFieldIncl(CurrentEventInfo)
   #print(Inclination)
-
-  # =============================================================================
-  #             Get interpolated positions from input file
-  # =============================================================================
-
-  #def get_time(positions, xmax_position, zenith, azimuth, n):
-      #True
-      # implement the timing for antennas
-  
-  #positions = np.loadtxt("input_positions.txt", unpack = True)
-  #time = get_time(positions, xmax_position, zenith, azimuth, n)
-  
-  #New_positions = np.stack(positions, time)
-  
   
 
   # =============================================================================
   #                              End
   # =============================================================================
     #
-  #desired_trace = do_interpolation_hdf5(Shower_parameters, Time, EfieldTraces, Xmax_distance, xmaxposition, GroundAltitude, PositionsPlane, NewPos, desiredtime, VoltageTraces = None, FilteredVoltageTraces = None, antennamin=0, antennamax=159, EventNumber=0, DISPLAY=DISPLAY, usetrace=usetrace)
+  desired_trace = do_interpolation_hdf5(Shower_parameters, Time, EfieldTraces, Xmax_distance, xmaxposition, GroundAltitude, PositionsPlane, NewPos, desiredtime, VoltageTraces = None, FilteredVoltageTraces = None, antennamin=0, antennamax=159, EventNumber=0, DISPLAY=DISPLAY, usetrace=usetrace)
 
 
 except FileNotFoundError:
