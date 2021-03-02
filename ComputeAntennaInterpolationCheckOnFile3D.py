@@ -11,7 +11,7 @@ import os
 import logging   #for...you guessed it...logging
 import numpy as np
 import matplotlib.pyplot as plt
-from zhairesppath import GetZHSEffectiveactionIndex
+from zhairesppath import GetZHSEffectiveactionIndex, GetEffectiveactionIndex
 
 
 import hdf5fileinout as hdf5io
@@ -28,16 +28,25 @@ DISPLAY=False
 
 
 Energy = 0.681 # EeV
-Zenith = 126.69  # GRANDconventions
-Azimuth = 180.0 # GARND conventions
+#Zenith = 126.69  # GRANDconventions
+#Azimuth = 180.0 # GARND conventions
 Inclination = 60.79 # degrees
+Azimuth = 0.0*180/np.pi
+Zenith = 92.92*np.pi/180.0
 
+
+
+#print(xmaxposition)
 Shower_parameters = np.array([Energy, Zenith, Azimuth, Inclination])
 Xmax_distance = 10500.0 # meters
 GroundAltitude = 1050.0 # meters
-xXmax = 8420.0 # meters
+#xXmax = 9380 # meters
+#yXmax = 0.0 # meters
+#zXmax = 7190 #meters
+
+xXmax = 248590 # meters
 yXmax = 0.0 # meters
-zXmax = 7330.0 #meters
+zXmax = 13770 #meters
 xmaxposition = np.array([xXmax, yXmax, zXmax])
 
 
@@ -45,7 +54,7 @@ EfieldTraces = []
 
 
 try:
-  InputFilename = "./Stshp_Proton_0.681_53.3_0.0_1" 
+  InputFilename = "./Stshp_Proton_0.631_87.1_180.0_1" 
   print("InputFileName:"+InputFilename)
   
   OutputFilename = InputFilename + '.Interpolated3D.'+str(usetrace)+'.hdf5'
@@ -73,26 +82,41 @@ try:
   #print("positions", xpoints[0], ypoints[0], zpoints[0])
  
     
-  nant = 0 # selected antenna
-  nref = GetZHSEffectiveactionIndex(xmaxposition[0],xmaxposition[1],xmaxposition[2], \
-  xant=xpoints[nant],yant=ypoints[nant],zant=zpoints[nant],ns=325,kr=-0.1218,stepsize = 20000) #averaged ref index
-  dant = np.sqrt((xmaxposition[0]-xpoints[nant])**2+ (xmaxposition[1]-ypoints[nant])**2 +  \
-                 (xmaxposition[2]-zpoints[nant])**2) # distance antenna-Xmax
-  t0ref = (dant*nref/(3*1e8))*1e9 # spherical arrival time for the antenna "0"
+  expXmax = 248910 # expected xmax distance
   
+  uv = np.array([np.sin(Zenith)*np.cos(Azimuth), np.sin(Zenith)*np.sin(Azimuth) , np.cos(Zenith)])
+  xmax_cord = -uv*expXmax #expected xmax position
+  xmax_cord[2] = xmax_cord[2] + GroundAltitude # we correct the z altitude
+  xmax_cord = xmaxposition
   
+  time2core = (expXmax/(299792458.0))*1e9
+  # =============================================================================
+  #       computation of the spherical time for all the antennas
+  # =============================================================================  
+
+  # =============================================================================
+  #       computation of the spherical time for the first antenna (A0)
+  # =============================================================================
+  #nant = 0 # selected antenna
+  #nref = GetZHSEffectiveactionIndex(xmax_cord[0]+10000,xmax_cord[1],xmax_cord[2], \
+  #xant=xpoints[nant],yant=ypoints[nant],zant=zpoints[nant],ns=325,kr=-0.1218,stepsize = 20000) #averaged ref index
+  #dant = np.sqrt((xmax_cord[0]-xpoints[nant])**2+ (xmax_cord[1]-ypoints[nant])**2 +  \
+  #              (xmax_cord[2]-zpoints[nant])**2) # distance antenna-Xmax
+  #t0ref = (dant*14/(299792458.0))*1e9 # spherical arrival time for the antenna "0"
+  #print(nref)
+ 
   t0all=[] # diffrences between the arrival time for the antenna 0 and other antennas
   for i in range(160):
       nant = i
-      nref = GetZHSEffectiveactionIndex(xmaxposition[0],xmaxposition[1],xmaxposition[2],\
+      nref = GetZHSEffectiveactionIndex(xmax_cord[0],xmax_cord[1],xmax_cord[2],\
       xant=xpoints[nant],yant=ypoints[nant],zant=zpoints[nant],ns=325,kr=-0.1218,stepsize = 20000)
-      dant = np.sqrt((xmaxposition[0]-xpoints[nant])**2+ (xmaxposition[1]-ypoints[nant])**2 +\
-                     (xmaxposition[2]-zpoints[nant])**2)
-      t0 = (dant*nref/(3*1e8))*1e9 - t0ref
+      dant = np.sqrt((xmax_cord[0]-xpoints[nant])**2+ (xmax_cord[1]-ypoints[nant])**2 +\
+                     (xmax_cord[2]-zpoints[nant])**2)
+      
+      t0 = (dant*nref/(299792458.0))*1e9 - time2core # I subtract the arrival time of the antenna A0: t0ref
       t0all.append(t0)
-  
     
-  t0points=CurrentAntennaInfo['T0'].data[antennamin:antennamax]
+  t0points=CurrentAntennaInfo['T0'].data[antennamin:antennamax] # t0 from the hdf5 file
   plt.plot(t0points-t0all)
   plt.xlabel("antenna id")
   plt.ylabel("t0_zhaires - t0_spherical [ns]")
@@ -150,7 +174,7 @@ try:
   ###############
   CurrentEventInfo=hdf5io.GetEventInfo(InputFilename,CurrentEventName)
   GroundAltitude=hdf5io.GetGroundAltitude(CurrentEventInfo)
-  #xmaxposition=hdf5io.GetXmaxPosition(CurrentEventInfo)
+  xmaxposition=hdf5io.GetXmaxPosition(CurrentEventInfo)
   print(xmaxposition)
   XmaxAltitude=hdf5io.GetXmaxAltitude(CurrentEventInfo)
   #xXmax=xmaxposition[0][0]
@@ -186,9 +210,19 @@ try:
   #                              End
   # =============================================================================
     #
-  desired_trace = do_interpolation_hdf5(Shower_parameters, Time, EfieldTraces, Xmax_distance, xmaxposition, GroundAltitude, PositionsPlane, NewPos, desiredtime, VoltageTraces = None, FilteredVoltageTraces = None, antennamin=0, antennamax=159, EventNumber=0, DISPLAY=DISPLAY, usetrace=usetrace)
+  #desired_trace = do_interpolation_hdf5(Shower_parameters, Time, EfieldTraces, Xmax_distance, xmaxposition, GroundAltitude, PositionsPlane, NewPos, desiredtime, VoltageTraces = None, FilteredVoltageTraces = None, antennamin=0, antennamax=159, EventNumber=0, DISPLAY=DISPLAY, usetrace=usetrace)
 
 
 except FileNotFoundError:
   logging.error("file not found or invalid:")
 
+  # =============================================================================
+  #       computation of the spherical time for the first antenna (A0)
+  # =============================================================================
+ # nant = 0 # selected antenna
+ # nref = GetZHSEffectiveactionIndex(xmaxposition[0],xmaxposition[1],xmaxposition[2], \
+ # xant=xpoints[nant],yant=ypoints[nant],zant=zpoints[nant],ns=325,kr=-0.1218,stepsize = 20000) #averaged ref index
+#  dant = np.sqrt((xmaxposition[0]-xpoints[nant])**2+ (xmaxposition[1]-ypoints[nant])**2 +  \
+ #                (xmaxposition[2]-zpoints[nant])**2) # distance antenna-Xmax
+#  t0ref = (dant*nref/(299792458.0))*1e9 # spherical arrival time for the antenna "0"
+  
