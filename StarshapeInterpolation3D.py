@@ -498,8 +498,6 @@ def get_in_shower_plane(x,y,z, core, zenith, inclination,azimuth):
     vxb = Position_shower[1, :]
     vxvxb =  Position_shower[2, :]
     
-    plt.scatter(x, y)
-    plt.show()
     return (v,vxb, vxvxb,)
 
 def get_phi(vxb, vxvxb):
@@ -869,6 +867,7 @@ def do_interpolation_hdf5(Shower_parameters, Time, EfieldTraces, XmaxDistance, x
 
     # Hand over a list file including the antenna positions you would like to have. This could be improved by including an ID.
     positions_des = desired
+    
     #DesiredAntennaInfoMeta=hdf5io.CreatAntennaInfoMeta(split(InputFilename)[1],CurrentEventName,AntennaModel="Interpolated") #TODO: discuss that!  
     DesiredIds=np.arange(0, len(positions_des)) #this could be taken from the input file of desired antennas
     #print(DesiredIds)
@@ -883,7 +882,7 @@ def do_interpolation_hdf5(Shower_parameters, Time, EfieldTraces, XmaxDistance, x
 
     positions_des=desired
     pos_sims_angles, pos_des_angles, distanceratio = GetAntennaAnglesSimon(Zenith,Azimuth,xmaxposition,positions_sims,positions_des, GroundAltitude, Inclination)
-
+    
     remove_antenna=[]
     desired_traceAll = []
     for i in np.arange(0,len(pos_des_angles)):
@@ -924,4 +923,4 @@ def do_interpolation_hdf5(Shower_parameters, Time, EfieldTraces, XmaxDistance, x
     DesiredT0=np.delete(DesiredT0,remove_antenna)
    
     return desired_traceAll
-
+    
