@@ -809,7 +809,7 @@ def PerformInterpolation(EfieldTraces, Time, Selected_I, Selected_II, Selected_I
 
 
 
-def do_interpolation_hdf5(Shower_parameters, Time, EfieldTraces, XmaxDistance, xmaxposition, GroundAltitude, PositionsPlane, desired, desiredtime, VoltageTraces, FilteredVoltageTraces, antennamin=0, antennamax=159, EventNumber=0, DISPLAY=False, usetrace='efield',overdistance=3000,FillOutliersWithZeros=True):
+def do_interpolation_hdf5(TargetShower, VoltageTraces, FilteredVoltageTraces, antennamin=0, antennamax=159, DISPLAY=False, usetrace='efield', FillOutliersWithZeros=True):
     '''
     Reads in arrays, looks for neighbours, calls the interpolation and saves the traces
 
@@ -858,12 +858,60 @@ def do_interpolation_hdf5(Shower_parameters, Time, EfieldTraces, XmaxDistance, x
       usetracelist=[str(usetrace)]
 
     #Getting Required Information from the InputEvent
+    
+    
+    Energy = 0.681 # EeV
+    Zenith = 126.69  # GRANDconventions
+    Azimuth = 180.0 # GARND conventions
+    Inclination = 60.79 # degrees
+    Time = [0.5, -48.5, 2000]
+    XmaxDistance = 10500.0 # meters
+    GroundAltitude = 1050.0 # meters
+    xXmax = 8420 # meters
+    yXmax = 0.0 # meters
+    zXmax = 7330 #meters
+    xmaxposition = np.array([xXmax, yXmax, zXmax])
+    Shower_parameters = np.array([Energy, Zenith, Azimuth, Inclination])
+    InputFilename = "./Stshp_Proton_0.681_53.3_0.0_1" 
+    CurrentRunInfo=hdf5io.GetRunInfo(InputFilename)
+    CurrentEventName=hdf5io.GetEventName(CurrentRunInfo,0) #using the first event of each file (there is only one for now)
+    CurrentAntennaInfo=hdf5io.GetAntennaInfo(InputFilename,CurrentEventName)
+  
+    antennamin=0
+    antennamax= 160 # WE ARE GETTING THE RANDOM antennas!
+    xpoints=CurrentAntennaInfo['X'].data[antennamin:antennamax]
+    ypoints=CurrentAntennaInfo['Y'].data[antennamin:antennamax]
+    zpoints=CurrentAntennaInfo['Z'].data[antennamin:antennamax]
+    PositionsPlane = np.column_stack((xpoints,ypoints,zpoints))
+    
+    antennamin=160
+    antennamax=176 # WE ARE GETTING THE RANDOM antennas!
+    AntID=CurrentAntennaInfo['ID'].data[antennamin:antennamax]
+    xpoints=CurrentAntennaInfo['X'].data[antennamin:antennamax]
+    ypoints=CurrentAntennaInfo['Y'].data[antennamin:antennamax]
+    zpoints=CurrentAntennaInfo['Z'].data[antennamin:antennamax]
+    t0points=CurrentAntennaInfo['T0'].data[antennamin:antennamax]
+    t0points=CurrentAntennaInfo['T0'].data[0:160]
+    desiredtime = t0points
 
+    desired =np.stack((xpoints,ypoints,zpoints), axis =1) # interpolated positions in meters [Number_antennas,3]
+    EfieldTraces = []
+    for i in range(160):
+      Antennaid = "A" + "%d" %i
+      Efield=hdf5io.GetAntennaEfield(InputFilename,CurrentEventName,Antennaid,OutputFormat="numpy")
+      EfieldTraces.append(Efield)
+    
+    
+    
     Zenith = Shower_parameters[1]
+    #Zenith = TargetShower.zenith
     Azimuth = Shower_parameters[2]
+    #Azimuth = TargetShower.azimuth
     Inclination = Shower_parameters[3]
+    #Inclination = TargetShower.inclination
     antennamax=antennamax+1
     positions_sims = PositionsPlane
+    #positions_sims = TargetShower.pos
 
     # Hand over a list file including the antenna positions you would like to have. This could be improved by including an ID.
     positions_des = desired
@@ -923,4 +971,6 @@ def do_interpolation_hdf5(Shower_parameters, Time, EfieldTraces, XmaxDistance, x
     DesiredT0=np.delete(DesiredT0,remove_antenna)
    
     return desired_traceAll
-    
+
+desired_trace = do_interpolation_hdf5(TargetShower, \
+  VoltageTraces = None, FilteredVoltageTraces = None, antennamin=0, antennamax=159, DISPLAY=False, usetrace="efield")  

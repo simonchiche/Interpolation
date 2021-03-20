@@ -27,19 +27,7 @@ usetrace='efield'
 DISPLAY=False
 
 
-Energy = 0.681 # EeV
-Zenith = 126.69  # GRANDconventions
-Azimuth = 180.0 # GARND conventions
-Inclination = 60.79 # degrees
 
-Shower_parameters = np.array([Energy, Zenith, Azimuth, Inclination])
-Xmax_distance = 10500.0 # meters
-GroundAltitude = 1050.0 # meters
-xXmax = 8420 # meters
-yXmax = 0.0 # meters
-zXmax = 7330 #meters
-
-xmaxposition = np.array([xXmax, yXmax, zXmax])
 
 
 EfieldTraces = []
@@ -92,7 +80,7 @@ try:
       Efield=hdf5io.GetAntennaEfield(InputFilename,CurrentEventName,Antennaid,OutputFormat="numpy")
       EfieldTraces.append(Efield)
 
-  Time = [0.5, -48.5, 2000] # TODO: check this part with Matias    
+  #Time = [0.5, -48.5, 2000] # TODO: check this part with Matias    
   
   
   CurrentEventInfo=hdf5io.GetEventInfo(InputFilename,CurrentEventName)
@@ -103,10 +91,10 @@ try:
 
   XmaxDistance=hdf5io.GetEventXmaxDistance(CurrentRunInfo,0)
 
-    #
-  desired_trace = do_interpolation_hdf5(Shower_parameters, Time, EfieldTraces, Xmax_distance, xmaxposition, GroundAltitude, PositionsPlane, NewPos, desiredtime, VoltageTraces = None, FilteredVoltageTraces = None, antennamin=0, antennamax=159, EventNumber=0, DISPLAY=DISPLAY, usetrace=usetrace)
+  TargetShower = 0
+  desired_trace = do_interpolation_hdf5(TargetShower, \
+  VoltageTraces = None, FilteredVoltageTraces = None, antennamin=0, antennamax=159, DISPLAY=False, usetrace="efield")
   
-  print(Xmax_distance, xmaxposition, GroundAltitude)
   
 except FileNotFoundError:
   logging.error("file not found or invalid:")
